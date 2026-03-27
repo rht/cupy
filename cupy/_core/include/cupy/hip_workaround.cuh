@@ -1,7 +1,7 @@
 #ifndef INCLUDE_GUARD_CUPY_HIP_WORKAROUND_H
 #define INCLUDE_GUARD_CUPY_HIP_WORKAROUND_H
 
-#ifdef __HIP_DEVICE_COMPILE__
+#if defined(__HIPCC_RTC__) || defined(__HIP_DEVICE_COMPILE__)
 
 // As per the comment below, use workaround conditionally:
 // https://github.com/ROCm/clr/blob/68147fe9b20a72aa43e7898bdd9ba39bca4afd14/hipamd/include/hip/amd_detail/amd_warp_sync_functions.h#L25
@@ -49,6 +49,6 @@ __device__ inline T cupy_shfl_xor_sync(unsigned int mask, T var, int laneMask, i
 // https://rocmdocs.amd.com/en/latest/Programming_Guides/Kernel_language.html#warp-cross-lane-functions
 #define __syncwarp() { __threadfence_block(); }
 
-#endif  // __HIP_DEVICE_COMPILE__
+#endif  // defined(__HIPCC_RTC__) || defined(__HIP_DEVICE_COMPILE__)
 
 #endif  // INCLUDE_GUARD_CUPY_HIP_WORKAROUND_H
