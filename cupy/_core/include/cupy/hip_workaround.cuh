@@ -15,15 +15,16 @@
 
 #else  // HIP >= 6.2 with warp sync builtins
 
-// HIP's __shfl_*_sync require a 64-bit mask, but CUDA uses 32-bit.
-// Use self-referential macros to cast the mask to 64-bit. The C/C++
-// preprocessor's "blue paint" rule (C99 6.10.3.4 / C++14 16.3.4)
-// prevents recursive expansion: the inner __shfl_*_sync resolves to
-// the real HIP function, not to the macro again.
-#define __shfl_sync(mask, ...) __shfl_sync(static_cast<unsigned long long>(mask), __VA_ARGS__)
-#define __shfl_up_sync(mask, ...) __shfl_up_sync(static_cast<unsigned long long>(mask), __VA_ARGS__)
-#define __shfl_down_sync(mask, ...) __shfl_down_sync(static_cast<unsigned long long>(mask), __VA_ARGS__)
-#define __shfl_xor_sync(mask, ...) __shfl_xor_sync(static_cast<unsigned long long>(mask), __VA_ARGS__)
+// HIP's __shfl_*_sync require a 64-bit mask. CUDA uses 0xffffffff (32-bit)
+// to mean "all lanes", but AMD wavefronts are 64 lanes wide so the mask
+// must be 0xffffffffffffffff. Since AMD wavefronts always run in lockstep,
+// we use ~0ULL (all lanes active) which is correct for any wavefront size.
+// The self-referential macro does not recurse due to the C/C++ preprocessor
+// "blue paint" rule (C99 6.10.3.4 / C++14 16.3.4).
+#define __shfl_sync(mask, ...) __shfl_sync(~0ULL, __VA_ARGS__)
+#define __shfl_up_sync(mask, ...) __shfl_up_sync(~0ULL, __VA_ARGS__)
+#define __shfl_down_sync(mask, ...) __shfl_down_sync(~0ULL, __VA_ARGS__)
+#define __shfl_xor_sync(mask, ...) __shfl_xor_sync(~0ULL, __VA_ARGS__)
 
 #endif  // (HIP_VERSION < 60200000) || defined(HIP_DISABLE_WARP_SYNC_BUILTINS)
 
